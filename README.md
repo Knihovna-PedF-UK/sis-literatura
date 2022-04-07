@@ -44,3 +44,7 @@ V `src/readsis.lua` může být třeba opravit čísla sloupců v XLSX souboru z
     local class_column = 1
     local citation_column = 3
 
+V `src/search.lua` můžeme nastavit váhu pro prvního autora:
+
+    local name_weight = 4
+
