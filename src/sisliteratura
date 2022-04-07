@@ -1,0 +1,44 @@
+#!/usr/bin/env texlua
+
+local xlsx = arg[1]
+local xml  = arg[2]
+
+if not xlsx or not xml or xlsx == "-h" or xlsx == "--help" then
+  print "usage:"
+  print " sisliteratura <filefromsis>.xlsx <almaexport>.xml"
+  os.exit()
+end
+
+kpse.set_program_name "luatex"
+
+
+local readsis = require "src.readsis"
+local readalma = require "src.readalma"
+local search  = require "src.search"
+
+local treshold = 0.4
+-- local html = require "luaxml-mod-html"
+
+local data = readsis.load(xlsx)
+local alma_data = readalma.load(xml)
+
+for id, data in pairs(alma_data) do
+  local document = (data.author or "") .. (data.title or "") .. (data.year or "")
+  search.add_document(id, document)
+end
+
+
+
+-- loop over citations and search corresponding alma data
+for _, record in ipairs(data) do
+  local results = search.search(record.value)
+  -- we are interested only in the first result
+  local first = results[1]
+  if first and first.weight > treshold then
+    print "************"
+    print(record.id, record.value)
+    print(first.id, first.weight)
+    local alma_record = alma_data[first.id]
+    print(alma_record.author, alma_record.title)
+  end
+end
