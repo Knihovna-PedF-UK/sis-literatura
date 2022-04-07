@@ -28,17 +28,40 @@ for id, data in pairs(alma_data) do
 end
 
 
+local function print_row(id, class, citation, weight, name, author, callno, sysno)
+  local t = {id, class, citation, weight or "", name or "", author or "", callno or "", sysno or ""}
+  print("<tr><td>" .. table.concat(t, "</td><td>") .. "</td></tr>")
+end
 
+print [[<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8 /">
+<title>Porovnání doporučené literatury v SIS s knihovnou</title>
+</head>
+<body>
+<table>
+<tr><th>ID</th><th>Předmět</th><th>Citace</th><th>Váha</th><th>Název</th><th>Autor</th><th>Signatura</th><th>Sysno</th></tr>
+]]
 -- loop over citations and search corresponding alma data
 for _, record in ipairs(data) do
-  local results = search.search(record.value)
+  local search_value = search.strip_tags(record.value)
+  local results = search.search(search_value)
   -- we are interested only in the first result
   local first = results[1]
   if first and first.weight > treshold then
-    print "************"
-    print(record.id, record.value)
-    print(first.id, first.weight)
+    -- print(record.id, record.value)
+    -- print(first.id, first.weight)
     local alma_record = alma_data[first.id]
-    print(alma_record.author, alma_record.title)
+    -- print(alma_record.author, alma_record.title)
+    print_row(record.id, record.class, search_value,  first.weight,  alma_record.title, alma_record.author, alma_record.callno, alma_record.sysno)
+  else
+    print_row(record.id, record.class, search_value)
   end
 end
+
+print [[
+</table>
+</body>
+</html>
+]]
