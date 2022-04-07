@@ -1,6 +1,13 @@
 
 local lower = unicode.utf8.lower
+
+-- index
 local search_table = {}
+
+-- we give more weight to name
+local name_weight = 4
+
+
 
 local function escape_pattern(text)
   -- Escaping strings for gsub
@@ -8,14 +15,17 @@ local function escape_pattern(text)
   return text:gsub("([^%w])", "%%%1")
 end
 
+-- prepare punctuation removing tables
 local puncts = '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'
 local escape_puncts = escape_pattern(puncts)
 local escaped_puntcts = string.format("[%s]+", escape_puncts)
 
+
+
 local function tokenize(text)
   -- local text = text or ""
   local t = {}
-  for word in text:gmatch("([^%s]+)") do
+  for word in text:gmatch("([^%s^%,^%.]+)") do
     word = word:gsub(escaped_puntcts, "")
     if word ~= "" then
       t[#t+1] = lower(word)
@@ -38,12 +48,26 @@ end
 local function search(text)
   local found_ids = {}
   local tokens = tokenize(text)
-  for _, tok in ipairs(tokens) do
+  -- find position of the first non numeric token
+  -- it should be author's name
+  local name_pos = 1
+  for i, tok in ipairs(tokens) do
+    if not tonumber(tok) then
+      name_pos = i
+      break
+    end
+  end
+  for i, tok in ipairs(tokens) do
     -- find all records that contain this token
     local documents = search_table[tok] or {}
     for id, _ in pairs(documents) do
       local count = found_ids[id] or 0
-      count = count + 1
+      -- give more weight to the author name
+      if i == name_pos then
+        count = count + name_weight
+      else
+        count = count + 1
+      end
       found_ids[id] = count
     end
   end
@@ -56,6 +80,12 @@ local function search(text)
   return results
 
 end
+
+
+local function strip_tags(text)
+  return text:gsub("<[^>]->", "")
+end
+
 
 
 -- add_document(1, "nazdar světe, jak se máš?")
@@ -74,7 +104,8 @@ end
 return {
   tokenize = tokenize,
   add_document = add_document,
-  search = search
+  search = search,
+  strip_tags = strip_tags
 }
 
 
