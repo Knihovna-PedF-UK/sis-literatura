@@ -45,6 +45,13 @@ local function add_document(id, text)
   end
 end
 
+ulen = utf8.len
+local function is_name(tok)
+  if tonumber(tok) then return false end
+  if ulen(tok) < 3 then return false end
+  return true
+end
+
 local function search(text)
   local found_ids = {}
   local tokens = tokenize(text)
@@ -52,7 +59,7 @@ local function search(text)
   -- it should be author's name
   local name_pos = 1
   for i, tok in ipairs(tokens) do
-    if not tonumber(tok) then
+    if is_name(tok) then
       name_pos = i
       break
     end
