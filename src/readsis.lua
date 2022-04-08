@@ -15,10 +15,13 @@ local function get_citations(text)
   local citations = {}
   -- remove this string
   text = text:gsub("_x000D_", "\n")
+  text = text:gsub("_x005F", "\n")
   -- small fixes
   text = text:gsub("\r", "\n")
   -- replace sequence of nonbreaking spaces by newline
   text = text:gsub("\194\160\194\160[\194\160]+", "\n")
+  -- replace sequence of spaces
+  text = text:gsub("   %s+", "\n")
   -- put extra newlines after <br> tag
   text = text:gsub("<br[^>]*>", "<br />\n")
   for line in text:gmatch("([^\n]+)") do
