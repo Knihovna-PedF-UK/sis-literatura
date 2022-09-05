@@ -41,7 +41,10 @@ local function load(filename)
   return records
 end
 
-local function newload(filename) 
+
+-- @param filename -- ALMA XML file 
+-- @param fn -- callback function that will be executed on each individual record
+local function newload(filename, fn) 
   local f, msg = io.open(filename, "r")
   if not f then return nil, msg end
   local text =f:read("*all")
@@ -65,6 +68,9 @@ local function newload(filename)
         if id and not records[id] then
           -- print(id, current.callno, current.author, current.title, current.year)
           records[id] = current
+          if fn then
+            fn(current)
+          end
         end
         current = {}
       end
