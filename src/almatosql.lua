@@ -1,3 +1,4 @@
+-- tohle byl pokus, jak udělat 
 local sqlite3 = require "lsqlite3"
 
 kpse.set_program_name "luatex"
@@ -7,6 +8,7 @@ local db_name = arg[1]
 local xml = arg[2]
 
 local function help()
+  print "!!!! do not use, fulltex search in sqlite doesn't work really well for this use case !!!!!"
   print "create a new database and insert data from alma for full text search"
   print "usage:"
   print "  texlua src/almatosql.lua db_name.sql alma_data.xml"
@@ -25,7 +27,7 @@ end
 os.remove(db_name)
 local db = sqlite3.open(db_name)
 -- initialize db
-db:exec([[
+local status = db:exec([[
 CREATE TABLE publications (
 id INTEGER PRIMARY KEY AUTOINCREMENT,
 callno TEXT NOT NULL,
@@ -37,7 +39,8 @@ id UNINDEXED,
 callno UNINDEXED, 
 citation, 
 content='publications', 
-content_rowid='id' 
+content_rowid='id',
+tokenize="trigram"
 );
 
 CREATE TRIGGER publications_ai AFTER INSERT ON publications
@@ -47,6 +50,14 @@ VALUES (new.id, new.callno, new.citation);
 END;
 ]])
 
+if status ~= sqlite3.OK then
+  print("ERROR: " .. db:errmsg())
+  os.exit()
+end
+
+
+
+-- use prepared statement to save citations into database
 local stmt = db:prepare 'insert into publications values(?,?,?);'
 
 local function insert_citation(callno, mmsid, citation)
