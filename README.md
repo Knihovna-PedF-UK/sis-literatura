@@ -16,9 +16,9 @@ Pokud je váha prvního výsledku vyšší, než minimální práh (0.4 defaultn
 
 # Použití:
 
-    ./src/sisliteratura data/literatura_2021.xlsx data/jednotky_alma.xml > vysledek.html
+    ./src/sisliteratura data/literatura_2021.xlsx data/jednotky_alma.xml data/sqlite.db  > vysledek.html
 
-Citace obsahujou HTML kód, takže vytváříme HTML tabulku.
+Citace obsahujou HTML kód, takže vytváříme HTML tabulku, a zároveň se data zapíšou do sqlite tabulky, která se předává ve 3. argumentu.
 
 # Konfigurace
 
