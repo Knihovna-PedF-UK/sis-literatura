@@ -1,11 +1,18 @@
 #!/usr/bin/env texlua
 
-local xlsx = arg[1]
-local xml  = arg[2]
+-- database needs sqlite on system, so it needs to be loaded 
+-- before kpse.set_program_name
+local database = require "src.database"
 
-if not xlsx or not xml or xlsx == "-h" or xlsx == "--help" then
+kpse.set_program_name "luatex"
+
+local xlsx    = arg[1]
+local xml     = arg[2]
+local db_name = arg[3]
+
+if not xlsx or not xml or not db_name or xlsx == "-h" or xlsx == "--help" then
   print "usage:"
-  print " sisliteratura <filefromsis>.xlsx <almaexport>.xml"
+  print " sisliteratura <filefromsis>.xlsx <almaexport>.xml <sqlitebase>.db"
   os.exit()
 end
 
@@ -18,14 +25,21 @@ local search  = require "src.search"
 
 local treshold = 0.4
 -- local html = require "luaxml-mod-html"
+--
 
-local data = readsis.load(xlsx)
-local alma_data = readalma.load(xml)
-
-for id, data in pairs(alma_data) do
+-- if db exists, it will be overwritten witch new data
+os.remove(db_name)
+database.init(db_name)
+local alma_data = readalma.load(xml, function(data)
+  -- for id, data in pairs(alma_data) do
   local document = (data.author or "") .. (data.title or "") .. (data.year or "")
+  local id = data.sysno
   search.add_document(id, document)
-end
+  local status, msg = database.insert_citation(id, data.callno, document)
+  if not status then 
+    print(msg)
+  end
+end)
 
 
 local function print_row(id, class, citation, weight, name, author, callno, sysno)
@@ -43,12 +57,23 @@ print [[<!DOCTYPE html>
 <table>
 <tr><th>ID</th><th>Předmět</th><th>Citace</th><th>Váha</th><th>Název</th><th>Autor</th><th>Signatura</th><th>Sysno</th></tr>
 ]]
+
+local data = readsis.load(xlsx)
+
 -- loop over citations and search corresponding alma data
 for _, record in ipairs(data) do
   local search_value = search.strip_tags(record.value)
   local results = search.search(search_value)
   -- we are interested only in the first result
   local first = results[1]
+  local status, msg = database.insert_sis(record.id, record.class, search_value)
+  if not status then print(msg) end
+  for _, res in ipairs(results) do
+    if res.weight > treshold then
+      local status, msg = database.insert_candidate(res.id, record.id, res.weight)
+      if not status then print(msg) end
+    end
+  end
   if first and first.weight > treshold then
     -- print(record.id, record.value)
     -- print(first.id, first.weight)
