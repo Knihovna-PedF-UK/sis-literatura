@@ -2,7 +2,7 @@
 local sqlite3 = require "lsqlite3"
 
 local database = {}
-local db, stmt, sis_query, candidate_query, random_citation, citation_candidates
+local db, stmt, sis_query, candidate_query, random_citation, known_citation, citation_candidates
 
 function database.init(db_name)
   -- Init database
@@ -42,6 +42,7 @@ function database.init(db_name)
   sis_query = db:prepare 'insert into sis values(?,?,?,?);'
   candidate_query = db:prepare 'insert into candidates values(?,?,?);'
   random_citation = db:prepare 'select * from sis where alma_id is null order by random() limit 1;'
+  known_citation = db:prepare 'select * from sis where id=?;'
   citation_candidates = db:prepare 'select * from alma inner JOIN candidates ON alma.id = candidates.alma_id where candidates.sis_id = ?'
   return true
 end
@@ -86,17 +87,23 @@ function database.insert_candidate(alma_id, sis_id, weight)
   return true
 end
 
-function database.find_citation()
+function database.find_citation(known_id)
   -- find random SIS citation that isn't processed yet
   local record = {candidates = {}}
-  random_citation:reset()
-  -- it seems that I shouldn't call the step function
-  -- if not random_citation:step()== sqlite3.DONE then
-  --   return nil, "SQL ERROR: " .. db:errmsg()
-  -- end
   local id, citation, class
-  for row in random_citation:nrows() do
-    record.id = row.id; record.citation = row.citation; record.class = row.class
+  if not known_id then
+    random_citation:reset()
+    for row in random_citation:nrows() do
+      record.id = row.id; record.citation = row.citation; record.class = row.class
+    end
+  else
+    -- but we can also want to find related books for a particular citation
+    known_citation:reset()
+    known_citation:bind(1, known_id)
+    -- local row = known_citation:get_named_values()
+    for row in known_citation:nrows() do
+      record.id = row.id; record.citation =  row.citation; record.class = row.class;
+    end
   end
   -- in the end, there will be no unprocessed books, hopefully
   if not record.id then
