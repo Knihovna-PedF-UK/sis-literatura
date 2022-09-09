@@ -5,7 +5,7 @@ a porovnat s literaturou z Almy.
 
 # Metoda
 
-Ze záznamů z Almy vytvářím index, kde každé slovo z názvů obsahuje seznam ID záznamů, které ho obsahují.
+Ze záznamů z Almy vytvářím index, kde každé slovo z názvů obsahuje seznam ID záznamů, které ho obsahují. Potřebuju XML získaný pomocí "Seznam jednotek dle knihovny a umístění" v analytickym dashboardu.
 
 Ze souboru ze SIS získám seznam citací, které pak hledám v indexu. Vrací se pole, které obsahuje seznam ID dokumentů z Almy, které se našly.
 Každé ID má přidělenou váhu která je: `počet shodných tokenů / počet tokenů v citaci`.
