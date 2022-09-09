@@ -5,7 +5,12 @@ local h5tk = require "h5tk"
 local template = [[<!DOCTYPE html>
 <html><head><meta charset="utf-8" /><title>${title}</title>
 <style type="text/css">
-body {max-width:65ch;margin:1em auto;}
+body {max-width:75ch;margin:1em auto;}
+tr {background-color: #FFF6D4; }
+td {padding-bottom: 8pt;}
+tr:first-child {background-color: #FF540A;}
+tr:nth-child(even) {background-color: #FFE680;}
+.sis-citation{border: 1px solid black; padding: 3pt;}
 </style>
 </head><body>
 <h1>${title}</h1>
@@ -27,7 +32,7 @@ end
 local function print_candidates(result)
   local t = {}
   for _, v in ipairs(result.candidates) do
-    table.insert(t, h.tr{h.td {h.a {href="/match/" .. v.id, v.citation}}, h.td{v.callno}})
+    table.insert(t, h.tr{h.td {h.a {href="/match/" .. result.id .. "/" .. v.id, v.citation}}, h.td{v.callno}})
   end
   return h.table{ 
     h.tr{h.th {"Autor + název"}, h.th {"Signatura"}},
@@ -45,7 +50,7 @@ local function get_candidates(id)
   end
   local content = h.section {
     h.h2{"Citace ze SIS"}, 
-    h.p { result.citation }, 
+    h.p {class="sis-citation", result.citation }, 
     h.p {h.b {"Předmět: "}, result.class},
     h.p {h.a {href="/nomatch/" .. result.id, "Není shoda"}, " / " , h.a{href="/nobook/" .. result.id, "Není kniha"},
     print_candidates(result)
