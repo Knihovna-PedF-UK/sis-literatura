@@ -4,6 +4,7 @@ local log = require "spreadsheet.spreadsheet-log"
 log.level = "error"
 
 local class_column = 1
+local year_column  = 2
 local citation_column = 3
 
 local function get_isbn(line)
@@ -48,6 +49,7 @@ local function load(filename)
   -- process rows
   for k,v in pairs(sheet.table) do
     local class = v[class_column][1].value -- first cell is class id
+    local year = v[year_column][1].value -- first cell is year
     -- local rec = {
     --   class = v[1][1].value, -- first cell is class id
     --   citations = {}
@@ -58,7 +60,7 @@ local function load(filename)
     for _, cit in ipairs(citations) do
       id = id + 1
       -- print(id, cit)
-      table.insert(records, {id = id, value = cit, class = class})
+      table.insert(records, {id = id, value = cit, class = class, year=year})
     end
     -- table.insert(records, rec)
   end
