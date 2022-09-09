@@ -21,6 +21,7 @@ function database.init(db_name)
   class TEXT NOT NULL,
   alma_id INTEGER DEFAULT NULL,
   citation TEXT,
+  year INTEGER,
   FOREIGN KEY (alma_id) REFERENCES alma(id) ON DELETE CASCADE
   );
 
@@ -39,7 +40,7 @@ function database.init(db_name)
   end
   -- use prepared statement to save citations into database
   stmt = db:prepare 'insert into alma values(?,?,?);'
-  sis_query = db:prepare 'insert into sis values(?,?,?,?);'
+  sis_query = db:prepare 'insert into sis values(?,?,?,?,?);'
   candidate_query = db:prepare 'insert into candidates values(?,?,?);'
   random_citation = db:prepare 'select * from sis where alma_id is null order by random() limit 1;'
   known_citation = db:prepare 'select * from sis where id=?;'
@@ -63,13 +64,14 @@ function database.insert_citation(mmsid, callno, citation)
   return true
 end
 
-function database.insert_sis(id, class, citation)
+function database.insert_sis(id, class, citation,year)
   sis_query:reset()
   sis_query:bind(1, id)
   sis_query:bind(2, class)
   -- alma_id should be null, so we can select records that we haven't processed yet
   sis_query:bind(3, nil)
   sis_query:bind(4, citation)
+  sis_query:bind(5, year)
   if not sis_query:step() == sqlite3.DONE then
     return nil, "SQL ERROR: " .. db:errmsg()
   end

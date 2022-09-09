@@ -35,7 +35,10 @@ local alma_data = readalma.load(xml, function(data)
   local document = (data.author or "") .. (data.title or "") .. (data.year or "")
   local id = data.sysno
   search.add_document(id, document)
-  local status, msg = database.insert_citation(id, data.callno, document)
+  local citation = table.concat({data.author or "", data.title or "", data.year or ""}, ". ")
+  citation = citation:gsub("%.%.", "."):gsub("^%. ", "")
+  -- print(citation)
+  local status, msg = database.insert_citation(id, data.callno, citation)
   if not status then 
     print(msg)
   end
@@ -66,7 +69,7 @@ for _, record in ipairs(data) do
   local results = search.search(search_value)
   -- we are interested only in the first result
   local first = results[1]
-  local status, msg = database.insert_sis(record.id, record.class, search_value)
+  local status, msg = database.insert_sis(record.id, record.class, search_value, record.year)
   if not status then print(msg) end
   for _, res in ipairs(results) do
     if res.weight > treshold then
