@@ -2,7 +2,7 @@
 local sqlite3 = require "lsqlite3"
 
 local database = {}
-local db, stmt, sis_query, candidate_query, random_citation, known_citation, citation_candidates
+local db, stmt, sis_query, candidate_query, random_citation, known_citation, citation_candidates, update_alma_id
 
 function database.init(db_name)
   -- Init database
@@ -44,7 +44,8 @@ function database.init(db_name)
   candidate_query = db:prepare 'insert into candidates values(?,?,?);'
   random_citation = db:prepare 'select * from sis where alma_id is null order by random() limit 1;'
   known_citation = db:prepare 'select * from sis where id=?;'
-  citation_candidates = db:prepare 'select * from alma inner JOIN candidates ON alma.id = candidates.alma_id where candidates.sis_id = ?'
+  citation_candidates = db:prepare 'select * from alma inner JOIN candidates ON alma.id = candidates.alma_id where candidates.sis_id = ?;'
+  update_alma_id = db:prepare 'update sis set alma_id=? where id=?;'
   return true
 end
 
@@ -125,6 +126,16 @@ function database.find_citation(known_id)
 
   -- local query = "select * from sis where alma_id is null order by random() limit 1;"
   -- local candadates = "select * from alma inner JOIN candidates ON alma.id = candidates.alma_id where candidates.sis_id = ?"
+end
+
+function database.set_sis_alma_id(id, mid)
+  update_alma_id:reset()
+  update_alma_id:bind(1, mid)
+  update_alma_id:bind(2, id)
+  if not update_alma_id:step() == sqlite3.DONE then
+    return nil, "SQL ERROR: " .. db:errmsg()
+  end
+  return true
 end
 
 return database
