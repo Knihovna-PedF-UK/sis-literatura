@@ -22,6 +22,19 @@ ${content}
 
 local h = h5tk.init()
 local db_name = arg[1]
+
+local function help()
+  print "Start web app for matching SIS and Alma records at port 8080"
+  print "Usage:"
+  print "  texlua server.lua data/alma.db"
+end
+
+
+if not db_name then
+  help()
+  os.exit()
+end
+
 database.init(db_name)
 local server = restserver:new():port(8080)
 
