@@ -229,7 +229,7 @@ local function calc_distance(sis, alma)
   local token_alma = table.concat(tokenize(clean_alma))
   local length_diff = ulen(token_sis) - ulen(token_alma)
   local distance = edit_distance(token_sis, token_alma) 
-  print(token_sis, token_alma)
+  -- print(token_sis, token_alma)
   return(distance / ulen(token_sis) )
 end
 

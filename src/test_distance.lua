@@ -82,8 +82,8 @@ for i =1, 500 do
   table.sort(t, function(a,b) return a.weight < b.weight end)
   local result = t[1]
   if result and result.weight < 0.5 then
-    print "**********************"
-    print(original)
-    print(result.weight, result.text)
+    -- print "**********************"
+    -- print(original)
+    print(result.weight, original, result.text)
   end
 end
