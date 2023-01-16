@@ -22,7 +22,7 @@ Citace obsahujou HTML kód, takže vytváříme HTML tabulku, a zároveň se dat
 
 Zároveň ten příkaz vytvoří Sqlite databázi, která jde využít s aplikací pro párování záznamů. Ta se spouští pomocí:
 
-     lua src/search.lua data/sqlite.db
+     lua src/server.lua data/sqlite.db
 
 V prohlížeči pak spustíme stránku `localhost:8080/` a  můžeme párovat záznamy.
 
