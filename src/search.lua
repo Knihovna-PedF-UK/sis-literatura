@@ -214,6 +214,11 @@ local function calc_distance(sis, alma)
   -- clean both records first
   local clean_sis = sis:gsub("ISBN", ""):gsub("[0-9%-][0-9%-][0-9%-][0-9%-][0-9%-][0-9%-][0-9%-][0-9%-][0-9%-][0-9%-][0-9%-][0-9%-][0-9%-][0-9%-]?[0-9%-]?[0-9%-]?[0-9%-]?", "")
   clean_sis = clean_sis:gsub("[0-9%-][0-9%-][0-9%-][0-9%-][0-9%-][0-9%-][0-9%-][0-9%-][0-9%-][0-9%-]", "")
+  -- odstraň vydání
+  clean_sis = clean_sis:gsub("[0-9]%.?%s*vyd[ání]?", "")
+  clean_sis = clean_sis:gsub("[Vv]yd[ání]?%.? [0-9]", "")
+  -- odstraň strany
+  clean_sis = clean_sis:gsub("[0-9]+%s*s%.", "")
   -- zkus odstranit vydavatele
   clean_sis = clean_sis:gsub("[^%.]+:[^%.]-([0-9]+)", "%1")
   -- remove auhtor year from the first part of citation
@@ -237,6 +242,8 @@ end
 -- for _, res in ipairs(results) do
 --   print(res.id, res.weight)
 -- end
+--
+-- calc_distance("Němec, Zbyněk a kol. Asistence ve vzdělávání žáků se sociálním znevýhodněním. Vyd. 1. Praha: Nová škola, 2014. 138 s. ISBN 978-80-903631-9-9.", "xxx")
 
 
 
