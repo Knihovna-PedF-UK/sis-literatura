@@ -155,6 +155,8 @@ function database.find_citation(known_id)
         database.set_sis_alma_id(record.id, best_candidate.id)
         return database.find_citation()
       elseif cosine < 0.20 then 
+        -- we set really low number, because occasionally, it would filter
+        -- out even good matches
         print("Really bad match")
         print(record.id, record.citation)
         print(best_candidate.id,best_candidate.citation)
