@@ -1,6 +1,71 @@
 
 local lower = unicode.utf8.lower
 
+local numlua = require "numlua"
+local dot = matrix.dot
+-- we use calculation method from https://towardsdatascience.com/understanding-cosine-similarity-and-its-application-fd42f585296a
+local square = function(a) 
+  local a = a
+  return a^2 
+end
+
+local sqrt = math.sqrt
+
+local function magnitude(matr)
+  return sqrt(matrix.sum(matrix.map(matr, square)))
+end
+
+local function cosine_dist(a,b)
+  local product = dot(a,b)
+  return product / (magnitude(a) * magnitude(b))
+end
+
+-- we don't work with utf8, but it doesn't matter in this case
+local slen = string.len
+local sub = string.sub
+
+local function make_ngrams(text, len)
+  local len = len or 3
+  local ngram = {}
+  for i = 1, slen(text) - len + 1 do
+    local curr = sub(text, i, i + len - 1)
+    table.insert(ngram, curr)
+  end
+  return ngram
+end
+
+-- combine ngrams for two texts, and make matrices for them
+local function make_vectors(a,b)
+  --- keep track of used ngrams
+  local used = {}
+  local position = 0
+  local update_useds = function(x)
+    for _, ngram in ipairs(x) do 
+      if not used[ngram] then
+        position = position + 1
+        used[ngram] = position
+      end
+    end
+  end
+  local create_vector = function(x)
+    local counts = {}
+    local t = {}
+    -- count occurences of the current ngram in string
+    for _, ngram in ipairs(x) do
+      counts[ngram] = (counts[ngram] or 0) + 1
+    end
+    -- create vector
+    for ngram, pos in pairs(used) do
+      t[pos] = counts[ngram] or 0
+    end
+    return matrix(t)
+  end
+  -- make database of all used ngrams in both strings
+  update_useds(a)
+  update_useds(b)
+  return create_vector(a), create_vector(b)
+end
+
 -- index
 local search_table = {}
 
