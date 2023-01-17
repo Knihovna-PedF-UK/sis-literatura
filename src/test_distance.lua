@@ -3,6 +3,14 @@ local search = require "src.search"
 local database = require "src.database"
 local calc_distance = search.calc_distance
 local original = "BLAŽEK, B. Tváří v tvář obrazovce. Praha: SLON, 1995. ISBN 978-80-00-00000-8"
+local clean_sis = search.clean_sis
+local clean_alma = search.clean_alma
+local make_ngrams = search.make_ngrams
+local make_vectors = search.make_vectors
+local cosine_dist = search.cosine_dist
+local tokenize = search.tokenize
+
+
 
 local searches = [[
 Blažek, Bohuslav, 1942-2004. Tváří v tvář obrazovce /. 1995
@@ -68,22 +76,37 @@ end
 database.init(arg[1])
 table.sort(t, function(a,b) return a.weight > b.weight end)
 
-for k,v in ipairs(t) do print(v.weight, v.text) end
-print(original)
+-- for k,v in ipairs(t) do print(v.weight, v.text) end
+-- print(original)
+
+local function text_to_ngram(text)
+  local clean_text = table.concat(tokenize(text), " ")
+  return make_ngrams(clean_text)
+end
 
 for i =1, 500 do
   local current = database.find_citation()
   local original = current.citation
+  local orig_ngram= text_to_ngram(clean_sis(original))
   local t = {}
   for _, rec  in ipairs(current.candidates) do
     local line = rec.citation
-    t[#t+1] = {text = line, weight = calc_distance(original, line)}
+    local alma_ngram = text_to_ngram(clean_alma(line))
+    local vect_a, vect_b = make_vectors(orig_ngram, alma_ngram)
+    t[#t+1] = {
+      text = line, 
+      -- weight = calc_distance(original, line),
+      cosine = cosine_dist(vect_a, vect_b)
+    }
   end
-  table.sort(t, function(a,b) return a.weight < b.weight end)
-  local result = t[1]
-  if result and result.weight < 0.5 then
+  -- table.sort(t, function(a,b) return a.weight < b.weight end)
+  -- local result = t[1]
+  table.sort(t, function(a,b) return a.cosine > b.cosine end)
+  local cosresult = t[1]
+  if cosresult then
     -- print "**********************"
     -- print(original)
-    print(result.weight, original, result.text)
+    -- print(result.weight, original, result.text, cosresult.cosine, cosresult.text)
+    print(cosresult.cosine, original, cosresult.text)
   end
 end

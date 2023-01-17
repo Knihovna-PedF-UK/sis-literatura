@@ -1,6 +1,16 @@
 -- initialize sqlite
 local sqlite3 = require "lsqlite3"
 
+local search = require "src.search"
+local calc_distance = search.calc_distance
+local clean_sis = search.clean_sis
+local clean_alma = search.clean_alma
+local make_ngrams = search.make_ngrams
+local make_vectors = search.make_vectors
+local cosine_dist = search.cosine_dist
+local tokenize = search.tokenize
+
+
 local database = {}
 local db, stmt, sis_query, candidate_query, random_citation, known_citation, citation_candidates, update_alma_id
 
@@ -90,6 +100,11 @@ function database.insert_candidate(alma_id, sis_id, weight)
   return true
 end
 
+local function text_to_ngram(text)
+  local clean_text = table.concat(tokenize(text), " ")
+  return make_ngrams(clean_text)
+end
+
 function database.find_citation(known_id)
   -- find random SIS citation that isn't processed yet
   local record = {candidates = {}}
@@ -115,12 +130,40 @@ function database.find_citation(known_id)
   -- 
   citation_candidates:reset()
   citation_candidates:bind(1, record.id)
+  local sis_ngrams = text_to_ngram(clean_sis(record.citation))
   -- if not citation_candidates:step() == sqlite3.DONE then
   --   return nil, "SQL ERROR: " .. db:errmsg()
   -- end
   for row in citation_candidates:nrows() do
+    local curr_ngram = text_to_ngram(clean_alma(row.citation or ""))
+    local vect_a, vect_b = make_vectors(sis_ngrams, curr_ngram)
+    row.cosine = cosine_dist(vect_a, vect_b)
     table.insert(record.candidates, row)
   end
+  if #record.candidates > 0 then
+    table.sort(record.candidates, function(a,b) return a.cosine > b.cosine end)
+    -- we can now test the cosine score of the candidate
+    local best_candidate = record.candidates[1] or {}
+    local cosine = best_candidate.cosine
+
+    if cosine then
+      if cosine > 0.74 then
+        -- this is a good match, it doesn't even need a supervision  
+        print("Really good match")
+        print(record.id, record.citation)
+        print(best_candidate.id, best_candidate.citation)
+        database.set_sis_alma_id(record.id, best_candidate.id)
+        return database.find_citation()
+      elseif cosine < 0.20 then 
+        print("Really bad match")
+        print(record.id, record.citation)
+        print(best_candidate.id,best_candidate.citation)
+        database.set_sis_alma_id(record.id, 0)
+        return database.find_citation()
+      end
+    end
+  end
+    -- really bad match
   return record
 
 
