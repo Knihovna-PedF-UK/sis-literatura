@@ -274,9 +274,7 @@ function edit_distance( s, t, lim )
     return d[ #d ]
 end
 
--- like
-local function calc_distance(sis, alma)
-  -- clean both records first
+local function clean_sis(sis)
   local clean_sis = sis:gsub("ISBN", ""):gsub("[0-9%-][0-9%-][0-9%-][0-9%-][0-9%-][0-9%-][0-9%-][0-9%-][0-9%-][0-9%-][0-9%-][0-9%-][0-9%-][0-9%-]?[0-9%-]?[0-9%-]?[0-9%-]?", "")
   clean_sis = clean_sis:gsub("[0-9%-][0-9%-][0-9%-][0-9%-][0-9%-][0-9%-][0-9%-][0-9%-][0-9%-][0-9%-]", "")
   -- odstraň vydání
@@ -286,10 +284,23 @@ local function calc_distance(sis, alma)
   clean_sis = clean_sis:gsub("[0-9]+%s*s%.", "")
   -- zkus odstranit vydavatele
   clean_sis = clean_sis:gsub("[^%.]+:[^%.]-([0-9]+)", "%1")
+  return clean_sis
+end
+
+local function clean_alma(alma)
   -- remove auhtor year from the first part of citation
   local clean_alma = alma:gsub("^([^%.]+)", function(author) 
     return author:gsub("[0-9].*", "") 
   end)
+  return clean_alma
+end
+
+
+-- like
+local function calc_distance(sis, alma)
+  -- clean both records first
+  local clean_sis = clean_sis(sis)
+  local clean_alma = clean_alma(alma)
   local token_sis = table.concat(tokenize(clean_sis))
   local token_alma = table.concat(tokenize(clean_alma))
   local length_diff = ulen(token_sis) - ulen(token_alma)
@@ -319,7 +330,12 @@ return {
   search = search,
   strip_tags = strip_tags,
   edit_distance = edit_distance,
-  calc_distance = calc_distance
+  calc_distance = calc_distance,
+  clean_alma = clean_alma,
+  clean_sis = clean_sis,
+  make_ngrams = make_ngrams,
+  cosine_dist = cosine_dist,
+  make_vectors = make_vectors,
 }
 
 
