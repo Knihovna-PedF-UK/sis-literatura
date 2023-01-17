@@ -147,7 +147,7 @@ function database.find_citation(known_id)
     local cosine = best_candidate.cosine
 
     if cosine then
-      if cosine > 0.74 then
+      if cosine > 0.7 then
         -- this is a good match, it doesn't even need a supervision  
         print("Really good match")
         print(record.id, record.citation)
