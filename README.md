@@ -12,6 +12,16 @@ Každé ID má přidělenou váhu která je: `počet shodných tokenů / počet 
 
 Pokud je váha prvního výsledku vyšší, než minimální práh (0.4 defaultně), bereme to jako shodu.
 
+# Instalace
+
+Potřebujeme knihovny Numlua, Sqlite3 a Xavante
+
+Pro instalaci Numlua je třeba nejdřív nainstalovat tyhle balíčky:
+
+    $ sudo dnf install lapack-devel hdf5-devel fftw-devel blas-devel
+
+Pak můžeme nainstalovat asi tuhle verzi, která řeší kompatibilitu s novějšími verzemi Lua: https://github.com/notCalle/numlua
+
 
 
 # Použití:
