@@ -135,16 +135,23 @@ Numeric Lua tries to maintain Lua's minimalist approach by providing bare-bone w
 Numeric Lua is licensed under the same license as Lua -- the MIT license -- and so can be freely used for academic and commercial purposes.
 ]]
 
+local text = io.read("*all")
 
 
 
-local documents = text:explode(".")
+local documents = text:explode("\n")
+print "building index"
 local index, tf_idfs = make_index(documents)
 
-local matches = search("also, check numlua", tf_idfs, index)
+print "searching"
+local matches = search("Kolektiv autorů (2012). Jak být dobrý učitel?: Tipy a náměty pro třídní učitele. Raabe", tf_idfs, index)
 
 for k,v in ipairs(matches) do
-  print(v.count, documents[v.doc])
+  if v.count > 0 then
+    print(v.count, documents[v.doc])
+  end
+  -- don't print too much 
+  if k > 40 then break end
 end
 
 -- print(tf(m, 2,2))
