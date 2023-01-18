@@ -1,5 +1,13 @@
 unpack = table.unpack
 require "numlua"
+local search = require "src.search"
+local calc_distance = search.calc_distance
+local clean_sis = search.clean_sis
+local clean_alma = search.clean_alma
+local make_ngrams = search.make_ngrams
+local make_vectors = search.make_vectors
+local cosine_dist = search.cosine_dist
+local tokenize = search.tokenize
 
 
 local a = matrix{2,1,0,3}
@@ -35,14 +43,15 @@ end
 
 local lower = string.lower
 
-local function tokenize(text)
-  local tokens = {}
-  for word in text:gmatch("(%a+)") do
-    table.insert(tokens, lower(word))
-  end
-  -- print(table.concat(tokens, " "))
-  return tokens
-end
+-- we import tokenize from search
+-- local function tokenize(text)
+--   local tokens = {}
+--   for word in text:gmatch("(%a+)") do
+--     table.insert(tokens, lower(word))
+--   end
+--   -- print(table.concat(tokens, " "))
+--   return tokens
+-- end
 
 local function make_index(documents)
   -- keep current token number 
@@ -125,6 +134,10 @@ local function search(text, tf_idfs, index)
   return matches
 end
 
+local function text_to_ngram(text)
+  local clean_text = table.concat(tokenize(text), " ")
+  return make_ngrams(clean_text)
+end
 
 
 local text = [[
@@ -144,14 +157,30 @@ print "building index"
 local index, tf_idfs = make_index(documents)
 
 print "searching"
-local matches = search("Kolektiv autorů (2012). Jak být dobrý učitel?: Tipy a náměty pro třídní učitele. Raabe", tf_idfs, index)
+local search_text = "Kolektiv autorů (2012). Jak být dobrý učitel?: Tipy a náměty pro třídní učitele. Raabe"
+local new_search_text = search_text
+local matches = search(new_search_text, tf_idfs, index)
 
+print "calc distance"
+print(search_text)
+local orig_ngrams = text_to_ngram(clean_sis(search_text))
+local distances = {}
 for k,v in ipairs(matches) do
   if v.count > 0 then
-    print(v.count, documents[v.doc])
+    local current = documents[v.doc]
+    local current_ngram = text_to_ngram(clean_alma(current))
+    local vect_a, vect_b = make_vectors(orig_ngrams, current_ngram)
+    local distance = cosine_dist(vect_a, vect_b)
+    distances[#distances+1] = {text = current, distance = distance, count = v.count}
+    -- print(v.count, current)
   end
   -- don't print too much 
-  if k > 40 then break end
+  if k > 20 then break end
+end
+
+table.sort(distances, function(a,b) return a.distance > b.distance end)
+for k,v in ipairs(distances) do
+  print(v.distance, v.count, v.text)
 end
 
 -- print(tf(m, 2,2))
