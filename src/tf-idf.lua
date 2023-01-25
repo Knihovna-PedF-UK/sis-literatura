@@ -10,12 +10,13 @@ local cosine_dist = search.cosine_dist
 local tokenize = search.tokenize
 
 
+-- tohle jsou jen pokusy s numlua, počítám tf-idf ručně
 local a = matrix{2,1,0,3}
 local b = matrix{0,3,0,0}
 local c = matrix{2,0,1,2}
 
 
-
+-- pokus s maticema
 local m = matrix.concat(a,b,c)
 m:list()
 
@@ -123,9 +124,9 @@ local function search(text, tf_idfs, index)
     local count = 0
     for _, tok_no in ipairs(tok_numbers) do
       -- try to find the current token in the document
-      count = count + (counts[tok_no] or 0)
+      count = count + (counts[tok_no] or 0)^2
     end
-    matches[#matches+1] = {count = count, doc = docno}
+    matches[#matches+1] = {count = math.sqrt(count), doc = docno}
   end
   -- sort 
   table.sort(matches, function(a,b)
@@ -139,6 +140,29 @@ local function text_to_ngram(text)
   return make_ngrams(clean_text)
 end
 
+local function read_tsv(text)
+  local t = {}
+  local header = {}
+  local first = true
+  for _,line in ipairs(text:explode("\n")) do
+    local fields = line:explode("\t")
+    if first then
+      header = fields
+    else
+      -- table.insert(t,fields)
+      local curr = {} 
+      for k,v in ipairs(fields) do
+        curr[header[k]] = v
+      end
+      t[#t+1] = curr
+        -- t
+    end
+    first = false
+
+  end
+  return t
+end
+
 
 local text = [[
 Numeric Lua is a numerical package for the Lua programming language. It includes support for complex numbers, multidimensional matrices, random number generation, fast Fourier transforms, and special functions. Most of the routines are simple wrappers for well known numerical libraries: complex numbers and part of the extended math modules come from C99; other special functions, including statistical functions, are adapted from Netlib's SLATEC and DCDFLIB; random number generation is based on Takuji Nishimura and Makoto Matsumoto's Mersenne Twister generator as the "engine" (uniform deviates) and Netlib's RANLIB for the remaining deviates; fast Fourier transforms are implemented from FFTW; and the matrix package draws most of its numeric intensive routines from Netlib's ubiquitous BLAS and LAPACK packages.
@@ -148,8 +172,18 @@ Numeric Lua tries to maintain Lua's minimalist approach by providing bare-bone w
 Numeric Lua is licensed under the same license as Lua -- the MIT license -- and so can be freely used for academic and commercial purposes.
 ]]
 
+local function help()
+  print "Usage: texlua sis.tsv alma.tsv"
+  os.exit()
+end
+
 local text = io.read("*all")
 
+local sis_filename = arg[1]
+local f = io.open(sis_filename, "r")
+if not f then help() end
+local sis_tbl = read_tsv(f:read("*all"))
+f:close()
 
 
 local documents = text:explode("\n")
@@ -157,32 +191,39 @@ print "building index"
 local index, tf_idfs = make_index(documents)
 
 print "searching"
-local search_text = "Kolektiv autorů (2012). Jak být dobrý učitel?: Tipy a náměty pro třídní učitele. Raabe"
-local new_search_text = search_text
-local matches = search(new_search_text, tf_idfs, index)
+for _, record in ipairs(sis_tbl) do
+  -- local search_text = "Kolektiv autorů (2012). Jak být dobrý učitel?: Tipy a náměty pro třídní učitele. Raabe"
+  local search_text = record.citation 
+  local new_search_text = search_text
+  if  search_text then
+    local matches = search(new_search_text, tf_idfs, index)
 
-print "calc distance"
-print(search_text)
-local orig_ngrams = text_to_ngram(clean_sis(search_text))
-local distances = {}
-for k,v in ipairs(matches) do
-  if v.count > 0 then
-    local current = documents[v.doc]
-    local current_ngram = text_to_ngram(clean_alma(current))
-    local vect_a, vect_b = make_vectors(orig_ngrams, current_ngram)
-    local distance = cosine_dist(vect_a, vect_b)
-    distances[#distances+1] = {text = current, distance = distance, count = v.count}
-    -- print(v.count, current)
+    -- print "calc distance"
+    -- print(search_text)
+    local orig_ngrams = text_to_ngram(clean_sis(search_text))
+    local distances = {}
+    for k,v in ipairs(matches) do
+      if v.count > 0 then
+        local current = documents[v.doc]
+        local current_ngram = text_to_ngram(clean_alma(current))
+        local vect_a, vect_b = make_vectors(orig_ngrams, current_ngram)
+        local distance = cosine_dist(vect_a, vect_b)
+        distances[#distances+1] = {text = current, distance = distance, count = v.count}
+        -- print(v.count, current)
+      end
+      -- don't print too much 
+      if k > 20 then break end
+    end
+
+    table.sort(distances, function(a,b) return a.distance > b.distance end)
+    local v = distances[1] or {}
+    print(search_text, v.distance or 0, v.count or 0, v.text or "")
+    -- for k,v in ipairs(distances) do
+    --   print(v.distance, v.count, v.text)
+    -- end
   end
-  -- don't print too much 
-  if k > 20 then break end
-end
 
-table.sort(distances, function(a,b) return a.distance > b.distance end)
-for k,v in ipairs(distances) do
-  print(v.distance, v.count, v.text)
 end
-
 -- print(tf(m, 2,2))
 -- print(idf(m, 2))
 print(tf_idf(m,2,2))
