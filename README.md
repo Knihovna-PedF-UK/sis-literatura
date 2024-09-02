@@ -22,6 +22,13 @@ Pro instalaci Numlua je třeba nejdřív nainstalovat tyhle balíčky:
 
 Pak můžeme nainstalovat asi tuhle verzi, která řeší kompatibilitu s novějšími verzemi Lua: https://github.com/notCalle/numlua
 
+# Jen seznam citací 
+
+Můžeme jen vygenerovat seznam citací z XLSX souboru ze SISu. Ten pak můžeme použít třeba v Anystyle nebo nějakym LLM pro získání strukturovanejch dat.
+
+Použití:
+
+     $ texlua src/getcitations.lua data/literatura_2021.xlsx | sort -u > data/citace.txt
 
 
 # Použití:
