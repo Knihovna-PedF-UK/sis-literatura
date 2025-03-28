@@ -3,6 +3,20 @@
 Dostali jsme soubor s doporučenou literaturou ze SISu. Pokusím se ho zpracovat
 a porovnat s literaturou z Almy.
 
+# Nový info
+
+Pomocí AI jsme získali JSON soubor s citacemi ze SIS. Tenhle soubor můžeme porovnat s tabulkou všech knížek a zístak dva výstupy:
+
+## Zjištění, jestli knížka v seznamu je v SIS:
+
+    $ python python-test/kategoriesis.py data/UK-knihovna-final.json ~/Stažené/knihy-kategorie-final.xlsx ~/Stažené/knihy-kategorie-sis.xlsx
+
+## Seznam všech knížek ze SIS se signaturama nalezených knížek
+
+    $ python python-test/sisprint.py  data/UK-knihovna-final.json ~/Stažené/knihy-kategorie-sis.xlsx data/sis-vse.xlsx
+
+# Starý info
+
 # Metoda
 
 Ze záznamů z Almy vytvářím index, kde každé slovo z názvů obsahuje seznam ID záznamů, které ho obsahují. Potřebuju XML získaný pomocí "Seznam jednotek dle knihovny a umístění" v analytickym dashboardu.
